@@ -1,0 +1,71 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout(
+                    scm: [
+                        $class: 'GitSCM', branches: [[name: '*/main']], 
+                        extensions: [], 
+                        userRemoteConfigs: [[credentialsId: 'nikitaevg-github', 
+                                             url: 'git@github.com:nikitaevg/smart_home.git']]
+                    ], poll: false
+                )
+            }
+        }
+        stage('Build image') {
+            steps {
+                dir('backend/data_collector') {
+                    script {
+                        imageName = "data-collector"
+                        customImage = docker.build(imageName)
+                    }
+                }
+            }
+        }
+        stage('Push image') {
+            steps {
+                script {
+                    registryAddress = "localhost:3001"
+                    docker.withRegistry('http://' + registryAddress) {
+                        customImage.push()
+                    }
+                }
+            }
+        }
+        stage('Remove temp image') {
+            steps {
+                sh "docker image rm ${customImage.id}"
+            }
+        }
+        stage('Deploy') {
+            steps {
+                script {
+                    dockerCommand = "docker rm \$(docker stop \$(docker ps -a -q --filter 'publish=8080' --format='{{.ID}}')) || true"
+                    shellCommandOnBackend(dockerCommand)
+                }
+                script {
+                    fullImageName = registryAddress + "/" + imageName
+                    dockerCommand = "docker run -p 8080:8080 --restart=on-failure -d ${fullImageName}"
+                    shellCommandOnBackend(dockerCommand)
+                }
+            }
+        }
+    }
+}
+
+void shellCommandOnBackend(String command) {
+    def remote = [:]
+    remote.name = "data-collector"
+    remote.host = "192.168.1.107"
+    remote.allowAnyHosts = true
+    withCredentials([
+        sshUserPrivateKey(credentialsId: 'jenkins-for-backend',
+                        keyFileVariable: 'identity')]) {
+                remote.user = "data-collector"
+                remote.identityFile = identity
+                sshCommand remote: remote, command: command
+    }
+}
+
