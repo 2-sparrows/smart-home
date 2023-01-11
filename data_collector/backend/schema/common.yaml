@@ -1,0 +1,60 @@
+components:
+  schemas:
+    LaserValuesRequest:
+      type: object
+      required: [ values ]
+      properties:
+        values:
+          type: array
+          items:
+            type: number
+            format: double
+
+    LightStateRequest:
+      type: object
+      required: [ lightState ]
+      properties:
+        lightState:
+          $ref: '#/components/schemas/LightState'
+
+    LightStateResponse:
+      type: object
+      required: [ lightState ]
+      properties:
+        lightState:
+          $ref: '#/components/schemas/LightState'
+
+    LightState:
+      type: string
+      enum:
+        - "On"
+        - "Off"
+
+  responses:
+    BadRequestError:
+      description: неверный формат данных, переданных в запросе
+      content:
+        application/json:
+          schema:
+            type: string
+
+    UnauthorizedError:
+      description: ошибка авторизации
+      content:
+        application/json:
+          schema:
+            type: string
+
+    ForbiddenError:
+      description: нет доступа к запрашиваемому ресурсу
+      content:
+        application/json:
+          schema:
+            type: string
+
+    InternalError:
+      description: неизвестная ошибка
+      content:
+        application/json:
+          schema:
+            type: string

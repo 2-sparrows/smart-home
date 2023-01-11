@@ -1,0 +1,69 @@
+openapi: 3.0.2
+
+info:
+  title: API Smart Home
+  version: 1.0.0
+
+servers:
+  - url: http://datacollector.mynet
+
+paths:
+  /v1/laser/values/submit:
+    post:
+      summary: Submit current laser value
+      operationId: submitLasersValue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'common.yaml#/components/schemas/LaserValuesRequest'
+      responses:
+        200:
+          description: ok
+
+  /v1/lights/state/expected:
+    get:
+      summary: Expected lights status
+      operationId: getExpectedLightsState
+      responses:
+        200:
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yaml#/components/schemas/LightStateResponse'
+
+
+  /v1/lights/state/submit:
+    post:
+      summary: Submit manual light state
+      operationId: submitLightState
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'common.yaml#/components/schemas/LightStateRequest'
+      responses:
+        200:
+          description: ok
+
+
+  /v1/test/task/run:
+    post:
+      summary: cron task
+      operationId: runTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ taskName ]
+              properties:
+                taskName:
+                  type: string
+      responses:
+        200:
+          description: ok

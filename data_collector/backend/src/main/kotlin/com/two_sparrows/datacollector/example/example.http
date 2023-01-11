@@ -1,0 +1,18 @@
+###
+POST http://localhost:8080/v1/laser/values/submit
+Content-Type: application/json
+
+{
+  "values": [1, 2, 4]
+}
+
+###
+GET http://localhost:8080/v1/lights/state/expected
+
+###
+POST http://localhost:8080/v1/lights/state/submit
+Content-Type: application/json
+
+{
+  "lightState": "On"
+}
