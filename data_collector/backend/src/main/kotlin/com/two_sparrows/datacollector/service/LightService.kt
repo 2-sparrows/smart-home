@@ -25,28 +25,21 @@ class LightService(
             dayPhase = currWorkPhase
             manualLightState = null
         }
+        if (homeService.getCurrentState() == HomeState.NobodyHome) {
+            return LightState.OFF
+        }
         return if (manualLightState != null) {
             manualLightState!!
+        } else if (getDayPhase(now, sunSchedule) == DayPhase.DAY) {
+            LightState.OFF
         } else {
-            handleAutomaticLight(now, sunSchedule)
+            LightState.ON
         }
     }
 
     @Synchronized
     fun setManualState(manualState: LightState) {
         manualLightState = manualState
-    }
-
-    private fun handleAutomaticLight(now: LocalTime, sunSchedule: SunSchedule): LightState {
-        if (getDayPhase(now, sunSchedule) == DayPhase.DAY) {
-            return LightState.OFF
-        }
-        return when (homeService.getCurrentState()) {
-            HomeState.SomeoneAtHome, HomeState.SomeoneIsComing ->
-                LightState.ON
-            HomeState.NobodyHome ->
-                LightState.OFF
-        }
     }
 
     private fun getDayPhase(now: LocalTime, sunSchedule: SunSchedule): DayPhase {
