@@ -9,7 +9,7 @@ pipeline {
                         $class: 'GitSCM', branches: [[name: '*/main']], 
                         extensions: [], 
                         userRemoteConfigs: [[credentialsId: 'nikitaevg-github', 
-                                             url: 'git@github.com:nikitaevg/smart_home.git']]
+                                             url: 'git@github.com:2-sparrows/smart-home.git']]
                     ], poll: false
                 )
             }
