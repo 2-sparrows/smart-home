@@ -16,7 +16,7 @@ pipeline {
         }
         stage('Build image') {
             steps {
-                dir('backend/data_collector') {
+                dir('data_collector/backend') {
                     script {
                         imageName = "data-collector"
                         customImage = docker.build(imageName)
