@@ -6,8 +6,10 @@ import com.two_sparrows.datacollector.model.PhoneState
 import org.springframework.stereotype.Service
 import java.net.ConnectException
 import java.net.InetAddress
+import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorCompletionService
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.annotation.PostConstruct
 
 @Service
@@ -18,6 +20,7 @@ class PhonesService(
 ) {
 
     private var phoneState: PhoneState = PhoneState.NotConnected;
+    private val executor = Executors.newFixedThreadPool(phoneConfiguration.ips.size + 1)
 
     @PostConstruct
     fun run() {
@@ -37,27 +40,30 @@ class PhonesService(
     }
 
     private fun hasConnectedPhones() : Boolean {
-        val timeout = 10 * 60 * 1000
-        val executor = Executors.newFixedThreadPool(phoneConfiguration.ips.size + 1)
-        val completionService = ExecutorCompletionService<Boolean>(executor)
+        val secondsToWait = 600
+        val result = AtomicBoolean(false)
+        val tasks = ArrayList<Callable<Unit>>()
         for (ip in phoneConfiguration.ips) {
             val address = InetAddress.getByName(ip)
-            completionService.submit {
+            tasks.add {
                 try {
-                    return@submit address.isReachable(timeout)
+                    for (i in 0 until secondsToWait) {
+                        if (address.isReachable(1000)) {
+                            result.set(true)
+                            return@add
+                        }
+                        if (result.get()) {
+                            return@add
+                        }
+                    }
+                    return@add
                 } catch (e: ConnectException) {
-                    return@submit false
+                    return@add
                 }
             }
         }
-        for (i in 0 until phoneConfiguration.ips.size) {
-            val result = completionService.take().get()
-            if (result) {
-                executor.shutdown()
-                return result
-            }
-        }
-        return false
+        executor.invokeAll(tasks)
+        return result.get()
     }
 
     fun checkOnPhones() {
